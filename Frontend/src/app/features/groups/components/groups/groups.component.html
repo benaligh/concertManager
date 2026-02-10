@@ -1,0 +1,236 @@
+<div class="groups-container">
+  
+  <div class="page-header">
+    <div class="search-bar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+        <path d="M13 13L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher un groupe..."
+        class="search-input"
+      />
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="triggerFileInput()" [disabled]="importing">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Importer Excel
+      </button>
+      <button class="btn btn-secondary filter-btn" (click)="toggleFilters()" [class.active]="showFilters || hasActiveFilters()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Filtres
+        <span *ngIf="hasActiveFilters()" class="filter-badge">{{ getActiveFiltersCount() }}</span>
+      </button>
+      <button class="btn btn-purple" (click)="onAdd()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        + Ajouter un groupe
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-panel" *ngIf="showFilters">
+    <div class="filters-header">
+      <h3 class="filters-title">Filtres de recherche</h3>
+      <button class="clear-filters-btn" (click)="clearFilters()" *ngIf="hasActiveFilters()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Réinitialiser
+      </button>
+    </div>
+    <div class="filters-grid">
+      <div class="filter-item">
+        <label for="filter-name">Nom</label>
+        <select
+          id="filter-name"
+          [(ngModel)]="filters.name"
+          (change)="applyFilters()"
+          class="filter-select"
+        >
+          <option value="">Tous les noms</option>
+          <option *ngFor="let name of filterOptions.names" [value]="name">{{ name }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label for="filter-origin">Origine</label>
+        <select
+          id="filter-origin"
+          [(ngModel)]="filters.origin"
+          (change)="applyFilters()"
+          class="filter-select"
+        >
+          <option value="">Toutes les origines</option>
+          <option *ngFor="let origin of filterOptions.origins" [value]="origin">{{ origin }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label for="filter-founders">Fondateurs</label>
+        <select
+          id="filter-founders"
+          [(ngModel)]="filters.founders"
+          (change)="applyFilters()"
+          class="filter-select"
+        >
+          <option value="">Tous les fondateurs</option>
+          <option *ngFor="let founder of filterOptions.founders" [value]="founder">{{ founder }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label for="filter-musical-current">Courant musical</label>
+        <select
+          id="filter-musical-current"
+          [(ngModel)]="filters.musicalCurrent"
+          (change)="applyFilters()"
+          class="filter-select"
+        >
+          <option value="">Tous les courants</option>
+          <option *ngFor="let current of filterOptions.musicalCurrents" [value]="current">{{ current }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="importSuccess" class="import-message success">
+    <div class="message-content">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+        <path d="M6 10L9 13L14 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>{{ importError }}</span>
+      <button class="close-message" (click)="importSuccess = false; importError = ''">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Origine</th>
+          <th>Ville</th>
+          <th>Année début</th>
+          <th>Année séparation</th>
+          <th>Fondateurs</th>
+          <th>Courant musical</th>
+          <th>Membres</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td colspan="9" class="loading-cell">Chargement...</td>
+        </tr>
+        <ng-container *ngIf="!loading">
+          <tr *ngFor="let group of filteredGroups">
+            <td>{{ group.name }}</td>
+            <td>{{ group.origin }}</td>
+            <td>{{ group.city || '-' }}</td>
+            <td>{{ group.startYear || '-' }}</td>
+            <td>{{ group.separationYear || '-' }}</td>
+            <td>{{ group.founders || '-' }}</td>
+            <td>
+              <span class="badge badge-purple">{{ group.musicalCurrent }}</span>
+            </td>
+            <td>{{ group.members }}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="icon-btn view-btn" (click)="onView(group)" title="Voir les détails">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3C4.5 3 1.73 5.11 1 8C1.73 10.89 4.5 13 8 13C11.5 13 14.27 10.89 15 8C14.27 5.11 11.5 3 8 3Z" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                </button>
+                <button class="icon-btn edit-btn" (click)="onEdit(group)" title="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.3333 2.00004C11.5084 1.82493 11.7163 1.68605 11.9447 1.59129C12.1731 1.49653 12.4173 1.44775 12.6667 1.44775C12.916 1.44775 13.1602 1.49653 13.3886 1.59129C13.617 1.68605 13.8249 1.82493 14 2.00004C14.1751 2.17515 14.314 2.38305 14.4087 2.61147C14.5035 2.83989 14.5523 3.08407 14.5523 3.33337C14.5523 3.58268 14.5035 3.82686 14.4087 4.05528C14.314 4.2837 14.1751 4.4916 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button class="icon-btn delete-btn" (click)="onDelete(group)" title="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4H14M5.33333 4V2.66667C5.33333 2.31305 5.47381 1.97391 5.72386 1.72386C5.97391 1.47381 6.31305 1.33333 6.66667 1.33333H9.33333C9.68696 1.33333 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6667 2.31305 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31305 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredGroups.length === 0">
+            <td colspan="9" class="empty-cell">Aucun groupe trouvé</td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-footer">
+    <div class="table-info">
+      Affichage de {{ filteredGroups.length }} groupe(s)
+    </div>
+    <div class="pagination">
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)"
+      >
+        Précédent
+      </button>
+      <span class="pagination-pages">
+        <button
+          *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+          class="pagination-page"
+          [class.active]="currentPage === i + 1"
+          (click)="goToPage(i + 1)"
+        >
+          {{ i + 1 }}
+        </button>
+      </span>
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage === getTotalPages()"
+        (click)="goToPage(currentPage + 1)"
+      >
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <app-group-form
+    *ngIf="showForm"
+    [group]="selectedGroup"
+    (close)="onFormClose()"
+    (submit)="onFormSubmit()"
+  ></app-group-form>
+
+  <app-import-excel-modal
+    *ngIf="showImportModal"
+    (close)="onImportModalClose()"
+    (importSuccess)="onImportModalSuccess($event)"
+  ></app-import-excel-modal>
+
+  <app-group-detail-modal
+    *ngIf="showDetailModal"
+    [group]="selectedGroupForView"
+    (close)="onDetailModalClose()"
+  ></app-group-detail-modal>
+
+  <app-confirm-modal
+    *ngIf="showConfirmModal"
+    [data]="confirmModalData"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-modal>
+</div>
+

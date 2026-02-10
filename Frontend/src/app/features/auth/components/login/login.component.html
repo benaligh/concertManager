@@ -1,0 +1,103 @@
+<div class="login-container">
+  <div class="login-card">
+    
+    <div class="login-header">
+      <div class="logo">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="url(#gradient)"/>
+          <path d="M24 14L24 34M18 20L18 28M30 20L30 28" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="gradient" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#7C3AED"/>
+              <stop offset="1" stop-color="#3B82F6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1 class="app-title">Concert Manager</h1>
+      <p class="app-subtitle">Connectez-vous à votre espace</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="benali.ghass@gmail.com"
+          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        <span *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="field-error">
+          <span *ngIf="loginForm.get('email')?.errors?.['required']">Email requis</span>
+          <span *ngIf="loginForm.get('email')?.errors?.['invalidEmail']">Merci de saisir un email valide</span>
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="password-input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="form-input"
+            placeholder="••••••••"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            tabindex="-1"
+          >
+            <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 3C6 3 2.73 5.11 1 8.5C2.73 11.89 6 14 10 14C14 14 17.27 11.89 19 8.5C17.27 5.11 14 3 10 3ZM10 12.5C7.24 12.5 5 10.26 5 7.5C5 4.74 7.24 2.5 10 2.5C12.76 2.5 15 4.74 15 7.5C15 10.26 12.76 12.5 10 12.5ZM10 4.5C8.07 4.5 6.5 6.07 6.5 8C6.5 9.93 8.07 11.5 10 11.5C11.93 11.5 13.5 9.93 13.5 8C13.5 6.07 11.93 4.5 10 4.5Z" fill="#6B7280"/>
+            </svg>
+            <svg *ngIf="showPassword" width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M2.5 2.5L17.5 17.5M8.16 8.16C7.84 8.48 7.65 8.9 7.65 9.35C7.65 10.24 8.36 10.95 9.25 10.95C9.7 10.95 10.12 10.76 10.44 10.44M14.84 14.84C13.63 15.55 12.13 16 10.5 16C6.5 16 3.23 13.89 1.5 10.5C2.23 8.54 3.57 6.98 5.26 5.9M8.5 3.75C9.44 3.55 10.45 3.5 11.5 3.5C15.5 3.5 18.77 5.61 20.5 9C19.77 10.96 18.43 12.52 16.74 13.6M12.5 7.25C13.19 7.61 13.75 8.27 13.75 9C13.75 10.24 12.74 11.25 11.5 11.25" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <span *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="field-error">
+          <span *ngIf="loginForm.get('password')?.errors?.['required']">Mot de passe requis</span>
+          <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Le mot de passe doit contenir plus de 5 caractères</span>
+        </span>
+      </div>
+
+      <div class="form-options">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="rememberMe" class="checkbox-input"/>
+          <span>Se souvenir de moi</span>
+        </label>
+        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary login-button" [disabled]="loading || loginForm.invalid">
+        <span *ngIf="!loading">Se connecter</span>
+        <span *ngIf="loading">Connexion...</span>
+        <svg *ngIf="!loading" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <span class="footer-dot purple"></span>
+      <span class="footer-text">Groupes</span>
+      <span class="footer-separator">•</span>
+      <span class="footer-dot teal"></span>
+      <span class="footer-text">Salles</span>
+      <span class="footer-separator">•</span>
+      <span class="footer-dot orange"></span>
+      <span class="footer-text">Concerts</span>
+    </div>
+  </div>
+</div>
+

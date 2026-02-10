@@ -1,0 +1,42 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ venue ? 'Modifier la salle' : 'Ajouter une salle' }}</h2>
+      <button class="close-btn" (click)="onCancel()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      <div class="form-group">
+        <label for="name">Nom *</label>
+        <input type="text" id="name" formControlName="name" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label for="capacity">Capacité *</label>
+        <input type="number" id="capacity" formControlName="capacity" class="form-input" min="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="city">Ville *</label>
+        <input type="text" id="city" formControlName="city" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label for="address">Adresse *</label>
+        <input type="text" id="address" formControlName="address" class="form-input" />
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Annuler</button>
+        <button type="submit" class="btn btn-teal" [disabled]="form.invalid || loading">
+          {{ loading ? 'Enregistrement...' : (venue ? 'Modifier' : 'Ajouter') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

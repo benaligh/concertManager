@@ -1,0 +1,38 @@
+<div class="concerts-container">
+  
+  <div class="concerts-header">
+    <div class="view-toggle">
+      <button
+        class="toggle-btn"
+        [class.active]="viewMode === 'calendar'"
+        (click)="onViewChange('calendar')"
+      >
+        Calendrier
+      </button>
+      <button
+        class="toggle-btn"
+        [class.active]="viewMode === 'list'"
+        (click)="onViewChange('list')"
+      >
+        Liste
+      </button>
+    </div>
+    <button class="btn btn-orange" (click)="onAdd()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      + Programmer
+    </button>
+  </div>
+
+  <app-concert-calendar *ngIf="viewMode === 'calendar'" #concertCalendar></app-concert-calendar>
+  <app-concert-list *ngIf="viewMode === 'list'" #concertList (editConcert)="onEditConcert($event)"></app-concert-list>
+
+  <app-concert-form
+    *ngIf="showForm"
+    [concert]="selectedConcert"
+    (close)="onFormClose()"
+    (submit)="onFormSubmit()"
+  ></app-concert-form>
+</div>
+

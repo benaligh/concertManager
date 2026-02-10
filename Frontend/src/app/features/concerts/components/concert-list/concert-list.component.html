@@ -1,0 +1,328 @@
+<div class="concerts-container">
+  
+  <div class="page-header">
+    <div class="search-bar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="search-icon">
+        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+        <path d="M13 13L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher un concert..."
+        class="search-input"
+      />
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary filter-btn" (click)="toggleFilters()" [class.active]="showFilters || hasActiveFilters()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Filtres
+        <span *ngIf="hasActiveFilters()" class="filter-badge">{{ getActiveFiltersCount() }}</span>
+      </button>
+      <button class="btn btn-secondary view-toggle-btn" (click)="toggleViewMode()" [title]="viewMode === 'table' ? 'Vue cartes' : 'Vue tableau'">
+        <svg *ngIf="viewMode === 'table'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        <svg *ngIf="viewMode === 'card'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 3H14C14.5523 3 15 3.44772 15 4V12C15 12.5523 14.5523 13 14 13H2C1.44772 13 1 12.5523 1 12V4C1 3.44772 1.44772 3 2 3Z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M1 6H15" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-panel" [class.show]="showFilters">
+    <div class="filter-header">
+      <h3>Filtres</h3>
+      <button class="btn btn-text" (click)="clearFilters()">Réinitialiser</button>
+    </div>
+    <div class="filters-grid">
+      <div class="filter-item">
+        <label for="filter-group">Groupe</label>
+        <select id="filter-group" [(ngModel)]="filters.group" (change)="applyFilters()" class="filter-select">
+          <option value="">Tous les groupes</option>
+          <option *ngFor="let group of filterOptions.groups" [value]="group">{{ group }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label for="filter-venue">Salle</label>
+        <select id="filter-venue" [(ngModel)]="filters.venue" (change)="applyFilters()" class="filter-select">
+          <option value="">Toutes les salles</option>
+          <option *ngFor="let venue of filterOptions.venues" [value]="venue">{{ venue }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label for="filter-date">Date</label>
+        <input
+          type="date"
+          id="filter-date"
+          [(ngModel)]="filters.date"
+          (change)="applyFilters()"
+          class="filter-input"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container" *ngIf="viewMode === 'table'">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Groupe</th>
+          <th>Salle</th>
+          <th>Date</th>
+          <th>Heure</th>
+          <th>Durée</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td colspan="7" class="loading-cell">
+            <div class="loading-spinner">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+              Chargement...
+            </div>
+          </td>
+        </tr>
+        <ng-container *ngIf="!loading">
+          <tr *ngFor="let concert of filteredConcerts">
+            <td>
+              <div class="cell-content">
+                <div class="group-info">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="icon-music">
+                    <path d="M9 18V5L17 3V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="6" cy="16" r="2" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="14" cy="14" r="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <span class="group-name">{{ concert.groupName || 'N/A' }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="cell-content">
+                <div class="venue-info">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="icon-location">
+                    <path d="M10 10C11.3807 10 12.5 8.88071 12.5 7.5C12.5 6.11929 11.3807 5 10 5C8.61929 5 7.5 6.11929 7.5 7.5C7.5 8.88071 8.61929 10 10 10Z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M10 18C13 14 17 10.5 17 7.5C17 4.46243 14.5376 2 10 2C5.46243 2 3 4.46243 3 7.5C3 10.5 7 14 10 18Z" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <span>{{ concert.venueName || 'N/A' }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="cell-content">
+                <div class="date-info">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="icon-calendar">
+                    <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M3 8H17" stroke="currentColor" stroke-width="2"/>
+                    <path d="M7 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M13 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>{{ datePipe.transform(concert.date, 'dd/MM/yyyy') }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="cell-content">
+                <div class="time-info">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="icon-clock">
+                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                    <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>{{ concert.time }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="duration-badge">{{ formatDuration(concert.duration) }}</span>
+            </td>
+            <td>
+              <span [class]="getStatusClass(concert.status)">{{ getStatusLabel(concert.status) }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="icon-btn view-btn" (click)="onView(concert)" title="Voir les détails">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3C4.5 3 1.73 5.11 1 8C1.73 10.89 4.5 13 8 13C11.5 13 14.27 10.89 15 8C14.27 5.11 11.5 3 8 3Z" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                </button>
+                <button class="icon-btn edit-btn" (click)="onEdit(concert)" title="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.3333 2.00004C11.5084 1.82493 11.7163 1.68605 11.9447 1.59129C12.1731 1.49653 12.4173 1.44775 12.6667 1.44775C12.916 1.44775 13.1602 1.49653 13.3886 1.59129C13.617 1.68605 13.8249 1.82493 14 2.00004C14.1751 2.17515 14.314 2.38305 14.4087 2.61147C14.5035 2.83989 14.5523 3.08407 14.5523 3.33337C14.5523 3.58268 14.5035 3.82686 14.4087 4.05528C14.314 4.2837 14.1751 4.4916 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button class="icon-btn delete-btn" (click)="onDelete(concert)" title="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4H14M5.33333 4V2.66667C5.33333 2.31305 5.47381 1.97391 5.72386 1.72386C5.97391 1.47381 6.31305 1.33333 6.66667 1.33333H9.33333C9.68696 1.33333 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6667 2.31305 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31305 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredConcerts.length === 0">
+            <td colspan="7" class="empty-cell">
+              <div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <rect x="8" y="12" width="48" height="40" rx="4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M8 20H56" stroke="currentColor" stroke-width="2"/>
+                  <path d="M20 2V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M44 2V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <p>Aucun concert trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cards-container" *ngIf="viewMode === 'card'">
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+            <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416;0 31.416" repeatCount="indefinite"/>
+            <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416;-31.416" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+        <p>Chargement...</p>
+      </div>
+    </div>
+    <div *ngIf="!loading && filteredConcerts.length === 0" class="empty-state-card">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="12" width="48" height="40" rx="4" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 20H56" stroke="currentColor" stroke-width="2"/>
+        <path d="M20 2V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M44 2V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>Aucun concert trouvé</p>
+    </div>
+    <div class="cards-grid" *ngIf="!loading && filteredConcerts.length > 0">
+      <div class="concert-card" *ngFor="let concert of filteredConcerts">
+        <div class="card-header">
+          <div class="card-group">
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none" class="card-icon">
+              <path d="M9 18V5L17 3V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="6" cy="16" r="2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="14" cy="14" r="2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h3 class="card-title">{{ concert.groupName || 'N/A' }}</h3>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-info-item">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 10C11.3807 10 12.5 8.88071 12.5 7.5C12.5 6.11929 11.3807 5 10 5C8.61929 5 7.5 6.11929 7.5 7.5C7.5 8.88071 8.61929 10 10 10Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M10 18C13 14 17 10.5 17 7.5C17 4.46243 14.5376 2 10 2C5.46243 2 3 4.46243 3 7.5C3 10.5 7 14 10 18Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>{{ concert.venueName || 'N/A' }}</span>
+          </div>
+          <div class="card-info-item">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M3 8H17" stroke="currentColor" stroke-width="2"/>
+              <path d="M7 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M13 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>{{ datePipe.transform(concert.date, 'dd/MM/yyyy') }}</span>
+          </div>
+          <div class="card-info-item">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>{{ concert.time }} - {{ formatDuration(concert.duration) }}</span>
+          </div>
+          <div class="card-info-item">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span [class]="getStatusClass(concert.status)">{{ getStatusLabel(concert.status) }}</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-sm btn-secondary" (click)="onView(concert)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3C4.5 3 1.73 5.11 1 8C1.73 10.89 4.5 13 8 13C11.5 13 14.27 10.89 15 8C14.27 5.11 11.5 3 8 3Z" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            Voir
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="onEdit(concert)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M11.3333 2.00004C11.5084 1.82493 11.7163 1.68605 11.9447 1.59129C12.1731 1.49653 12.4173 1.44775 12.6667 1.44775C12.916 1.44775 13.1602 1.49653 13.3886 1.59129C13.617 1.68605 13.8249 1.82493 14 2.00004C14.1751 2.17515 14.314 2.38305 14.4087 2.61147C14.5035 2.83989 14.5523 3.08407 14.5523 3.33337C14.5523 3.58268 14.5035 3.82686 14.4087 4.05528C14.314 4.2837 14.1751 4.4916 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Modifier
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="onDelete(concert)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4H14M5.33333 4V2.66667C5.33333 2.31305 5.47381 1.97391 5.72386 1.72386C5.97391 1.47381 6.31305 1.33333 6.66667 1.33333H9.33333C9.68696 1.33333 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6667 2.31305 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31305 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-footer" *ngIf="filteredConcerts.length > 0">
+    <div class="table-info">
+      Affichage de {{ filteredConcerts.length }} concert(s)
+    </div>
+    <div class="pagination">
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)"
+      >
+        Précédent
+      </button>
+      <span class="pagination-pages">
+        <button
+          *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+          class="pagination-page"
+          [class.active]="currentPage === i + 1"
+          (click)="goToPage(i + 1)"
+        >
+          {{ i + 1 }}
+        </button>
+      </span>
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage === getTotalPages()"
+        (click)="goToPage(currentPage + 1)"
+      >
+        Suivant
+      </button>
+    </div>
+  </div>
+
+  <app-concert-detail-modal
+    *ngIf="showDetailModal"
+    [concert]="selectedConcertForView"
+    (close)="onDetailModalClose()"
+  ></app-concert-detail-modal>
+
+  <app-confirm-modal
+    *ngIf="showConfirmModal"
+    [data]="confirmModalData"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-modal>
+</div>

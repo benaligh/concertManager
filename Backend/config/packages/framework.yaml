@@ -1,0 +1,11 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    serializer:
+        enabled: true
+    default_locale: fr
+    # Form disabled for API-only application
+    # form:
+    #     enabled: true
+    validation:
+        enabled: true
+

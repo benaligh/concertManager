@@ -1,0 +1,114 @@
+<div class="modal-overlay" (click)="onBackdropClick($event)" *ngIf="concert">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 8H17" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M13 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h2 class="modal-title">Concert - {{ concert.groupName }}</h2>
+          <p class="modal-subtitle">Détails de la programmation</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="onClose()" type="button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-grid">
+        
+        <div class="detail-section">
+          <h3 class="section-title">Informations du concert</h3>
+          <div class="detail-items">
+            <div class="detail-item">
+              <div class="detail-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M9 18V5L17 3V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="6" cy="16" r="2" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="14" cy="14" r="2" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Groupe
+              </div>
+              <div class="detail-value">{{ concert.groupName || 'N/A' }}</div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 10C11.3807 10 12.5 8.88071 12.5 7.5C12.5 6.11929 11.3807 5 10 5C8.61929 5 7.5 6.11929 7.5 7.5C7.5 8.88071 8.61929 10 10 10Z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M10 18C13 14 17 10.5 17 7.5C17 4.46243 14.5376 2 10 2C5.46243 2 3 4.46243 3 7.5C3 10.5 7 14 10 18Z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Salle
+              </div>
+              <div class="detail-value">{{ concert.venueName || 'N/A' }}</div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M3 8H17" stroke="currentColor" stroke-width="2"/>
+                  <path d="M7 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M13 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Date
+              </div>
+              <div class="detail-value">{{ datePipe.transform(concert.date, 'dd/MM/yyyy') }}</div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                  <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Heure
+              </div>
+              <div class="detail-value">{{ concert.time }}</div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                  <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Durée
+              </div>
+              <div class="detail-value">
+                <span class="duration-badge">{{ formatDuration(concert.duration) }}</span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                  <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Statut
+              </div>
+              <div class="detail-value">
+                <span [class]="getStatusClass(concert.status)">{{ getStatusLabel(concert.status) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="onClose()" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+

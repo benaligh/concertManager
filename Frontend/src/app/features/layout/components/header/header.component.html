@@ -1,0 +1,35 @@
+<header class="header">
+  <div class="header-left">
+    <nav class="breadcrumbs">
+      <span *ngFor="let crumb of breadcrumbs; let last = last" class="breadcrumb">
+        <a *ngIf="!last" [routerLink]="getBreadcrumbLink(crumb)">{{ crumb }}</a>
+        <span *ngIf="last">{{ crumb }}</span>
+        <span *ngIf="!last" class="breadcrumb-separator"> > </span>
+      </span>
+    </nav>
+    <h1 class="page-title">{{ pageTitle }}</h1>
+  </div>
+
+  <div class="header-right">
+    <div class="user-info">
+      <div class="user-avatar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M6 21C6 17 8.68629 14 12 14C15.3137 14 18 17 18 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ getCurrentUser()?.name || 'Ghassen Ben Ali' }}</div>
+        <div class="user-email">{{ getCurrentUser()?.email || 'benali.ghass@gmail.com' }}</div>
+      </div>
+    </div>
+
+    <button class="header-icon-btn logout-btn" (click)="logout()" title="Déconnexion">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7.5 10H17.5M17.5 10L14.5 7M17.5 10L14.5 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2.5 5C2.5 4.17157 3.17157 3.5 4 3.5H9.5C10.3284 3.5 11 4.17157 11 5V15C11 15.8284 10.3284 16.5 9.5 16.5H4C3.17157 16.5 2.5 15.8284 2.5 15V5Z" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    </button>
+  </div>
+</header>
+

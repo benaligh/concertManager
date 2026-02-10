@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  concert-manager-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: concert-manager-frontend
+    ports:
+      - "4202:4202"
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./angular.json:/app/angular.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.app.json:/app/tsconfig.app.json
+      - ./tsconfig.spec.json:/app/tsconfig.spec.json
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - concert-manager-network
+
+networks:
+  concert-manager-network:
+    driver: bridge
+

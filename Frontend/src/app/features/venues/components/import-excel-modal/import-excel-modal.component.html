@@ -1,0 +1,148 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <div class="modal-header-content">
+        <div class="modal-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="modal-title-section">
+          <h2 class="modal-title">Importer un fichier Excel</h2>
+          <p class="modal-subtitle">Sélectionnez ou glissez-déposez votre fichier Excel contenant les salles</p>
+        </div>
+      </div>
+      <div class="modal-header-actions">
+        <button class="btn btn-text download-template-btn" (click)="downloadTemplate()" type="button" title="Télécharger le modèle Excel">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 3V13M3 8H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 13L6 9M10 13L14 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Télécharger le modèle</span>
+        </button>
+        <button class="close-btn" (click)="onClose()" type="button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <input
+        type="file"
+        id="excel-file-input-modal-venue"
+        accept=".xlsx,.xls"
+        (change)="onFileSelected($event)"
+        style="display: none;"
+      />
+
+      <div 
+        class="drop-zone"
+        [class.dragging]="isDragging"
+        [class.has-file]="selectedFile"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="!selectedFile && triggerFileInput()"
+      >
+        <div class="drop-zone-content" *ngIf="!selectedFile">
+          <div class="drop-zone-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect x="8" y="8" width="32" height="32" rx="4" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
+              <path d="M24 16V32M16 24H32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="drop-zone-title">Glissez-déposez votre fichier ici</h3>
+          <p class="drop-zone-subtitle">ou</p>
+          <button class="btn btn-primary" type="button" (click)="triggerFileInput()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 3V13M3 8H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Parcourir les fichiers
+          </button>
+          <p class="drop-zone-hint">Formats acceptés: .xlsx, .xls (Max 10MB)</p>
+        </div>
+
+        <div class="file-selected" *ngIf="selectedFile">
+          <div class="file-info">
+            <div class="file-icon">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <rect x="6" y="6" width="28" height="28" rx="3" fill="var(--purple-lighter)" stroke="var(--primary-purple)" stroke-width="2"/>
+                <path d="M14 14H26M14 20H26M14 26H20" stroke="var(--primary-purple)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="file-details">
+              <h4 class="file-name">{{ fileName }}</h4>
+              <p class="file-size">{{ formatFileSize(fileSize) }}</p>
+            </div>
+            <button class="remove-file-btn" (click)="removeFile()" type="button">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="error" class="error-message">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+          <path d="M10 6V10M10 14H10.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+
+      <div *ngIf="showPreview && previewData.length > 0" class="preview-section">
+        <div class="preview-header">
+          <h3 class="preview-title">Aperçu des données (5 premières lignes)</h3>
+          <span class="preview-count">{{ previewData.length }} ligne(s)</span>
+        </div>
+        <div class="preview-table-container">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Capacité</th>
+                <th>Ville</th>
+                <th>Adresse</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of previewData">
+                <td>{{ row['Nom'] || '-' }}</td>
+                <td>{{ row['Capacité'] || '-' }}</td>
+                <td>{{ row['Ville'] || '-' }}</td>
+                <td>{{ row['Adresse'] || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()" type="button" [disabled]="importing">
+        Annuler
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="onImport()" 
+        type="button"
+        [disabled]="!selectedFile || importing"
+      >
+        <svg *ngIf="!importing" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 3V13M3 8H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span *ngIf="importing" class="spinner"></span>
+        {{ importing ? 'Import en cours...' : 'Importer' }}
+      </button>
+    </div>
+  </div>
+</div>
+

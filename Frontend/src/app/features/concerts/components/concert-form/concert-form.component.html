@@ -1,0 +1,76 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Modifier un concert' : 'Programmer un concert' }}</h2>
+      <button class="close-btn" (click)="onCancel()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      <div class="form-group">
+        <label for="groupId">Groupe *</label>
+        <select id="groupId" formControlName="groupId" class="form-input" [class.error]="form.get('groupId')?.invalid && form.get('groupId')?.touched">
+          <option value="">Sélectionner un groupe</option>
+          <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+        </select>
+        <span *ngIf="form.get('groupId')?.invalid && form.get('groupId')?.touched" class="field-error">
+          Veuillez sélectionner un groupe
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="venueId">Salle *</label>
+        <select id="venueId" formControlName="venueId" class="form-input" [class.error]="form.get('venueId')?.invalid && form.get('venueId')?.touched">
+          <option value="">Sélectionner une salle</option>
+          <option *ngFor="let venue of venues" [value]="venue.id">{{ venue.name }}</option>
+        </select>
+        <span *ngIf="form.get('venueId')?.invalid && form.get('venueId')?.touched" class="field-error">
+          Veuillez sélectionner une salle
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="date">Date *</label>
+        <input type="date" id="date" formControlName="date" class="form-input" [class.error]="form.get('date')?.invalid && form.get('date')?.touched" />
+        <span *ngIf="form.get('date')?.invalid && form.get('date')?.touched" class="field-error">
+          Veuillez sélectionner une date
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="time">Heure *</label>
+        <input type="time" id="time" formControlName="time" class="form-input" [class.error]="form.get('time')?.invalid && form.get('time')?.touched" />
+        <span *ngIf="form.get('time')?.invalid && form.get('time')?.touched" class="field-error">
+          Veuillez sélectionner une heure
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="duration">Durée (minutes) *</label>
+        <input type="number" id="duration" formControlName="duration" min="1" class="form-input" [class.error]="form.get('duration')?.invalid && form.get('duration')?.touched" />
+        <span *ngIf="form.get('duration')?.invalid && form.get('duration')?.touched" class="field-error">
+          <span *ngIf="form.get('duration')?.errors?.['required']">La durée est requise</span>
+          <span *ngIf="form.get('duration')?.errors?.['min']">La durée doit être d'au moins 1 minute</span>
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Statut *</label>
+        <select id="status" formControlName="status" class="form-input">
+          <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Annuler</button>
+        <button type="submit" class="btn btn-orange" [disabled]="form.invalid || loading">
+          {{ loading ? 'Enregistrement...' : (isEditMode ? 'Modifier' : 'Programmer') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

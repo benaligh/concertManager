@@ -1,0 +1,181 @@
+.calendar-container {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  color: var(--gray-600);
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-800);
+}
+
+.month-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--gray-800);
+  margin: 0;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.weekday {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-600);
+  padding: var(--spacing-sm);
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+}
+
+.calendar-day {
+  min-height: 100px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  background: var(--white);
+  transition: all var(--transition-base);
+}
+
+.calendar-day:hover {
+  background-color: var(--gray-50);
+  border-color: var(--primary-purple);
+}
+
+.calendar-day.other-month {
+  opacity: 0.3;
+  background-color: var(--gray-50);
+}
+
+.day-number {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-xs);
+}
+
+.day-concerts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.concert-event {
+  background-color: var(--purple-lighter);
+  color: var(--primary-purple);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.concert-event:hover {
+  background-color: var(--primary-purple);
+  color: var(--white);
+  transform: scale(1.02);
+}
+
+.concert-time {
+  font-size: 10px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.concert-name {
+  font-weight: 500;
+}
+
+.concert-event.status-planned {
+  background-color: #E3F2FD;
+  color: #1976D2;
+  border-left: 3px solid #1976D2;
+}
+
+.concert-event.status-confirmed {
+  background-color: #E8F5E9;
+  color: #388E3C;
+  border-left: 3px solid #388E3C;
+}
+
+.concert-event.status-cancelled {
+  background-color: #FFEBEE;
+  color: #D32F2F;
+  border-left: 3px solid #D32F2F;
+  opacity: 0.7;
+}
+
+.concert-event.status-completed {
+  background-color: #F3E5F5;
+  color: #7B1FA2;
+  border-left: 3px solid #7B1FA2;
+}
+
+.concert-event.status-postponed {
+  background-color: #FFF3E0;
+  color: #F57C00;
+  border-left: 3px solid #F57C00;
+}
+
+@media (max-width: 768px) {
+  .calendar-container {
+    padding: var(--spacing-md);
+  }
+
+  .calendar-day {
+    min-height: 60px;
+    padding: var(--spacing-xs);
+  }
+
+  .day-number {
+    font-size: var(--font-size-xs);
+  }
+
+  .concert-event {
+    font-size: 10px;
+    padding: 2px var(--spacing-xs);
+  }
+}
+

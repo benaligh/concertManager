@@ -1,0 +1,1325 @@
+openapi: 3.0.3
+info:
+  title: Concert Manager API
+  description: |
+    API REST pour la gestion de concerts, groupes musicaux et salles.
+    
+    Cette API permet de :
+    - Gérer les groupes musicaux (CRUD, import Excel)
+    - Gérer les salles de concert (CRUD, import Excel)
+    - Programmer et gérer les concerts (CRUD)
+    - Consulter les statistiques du dashboard
+    - Consulter les activités récentes
+    
+
+    **Format** : JSON
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@concertmanager.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8005/api
+    description: Serveur de développement local
+  - url: https://api.concertmanager.com/api
+    description: Serveur de production
+
+tags:
+  - name: Groups
+    description: Gestion des groupes musicaux
+  - name: Salles
+    description: Gestion des salles de concert
+  - name: Concerts
+    description: Gestion de la programmation des concerts
+  - name: Dashboard
+    description: Statistiques et activités récentes
+
+paths:
+  # ===========================================
+  # GROUPS (Groupes)
+  # ===========================================
+  /groups:
+    get:
+      tags:
+        - Groups
+      summary: Liste des groupes avec filtres et pagination
+      description: |
+        Récupère la liste des groupes musicaux avec possibilité de filtrer par :
+        - name : Nom du groupe (recherche partielle)
+        - city : Ville d'origine
+        - musicalStyle : Style musical
+        - startYear : Année de début
+        
+        La pagination est gérée via les paramètres `page` et `limit`.
+      operationId: listGroups
+      parameters:
+        - name: name
+          in: query
+          description: Filtrer par nom (recherche partielle)
+          required: false
+          schema:
+            type: string
+        - name: city
+          in: query
+          description: Filtrer par ville
+          required: false
+          schema:
+            type: string
+        - name: musicalStyle
+          in: query
+          description: Filtrer par style musical
+          required: false
+          schema:
+            type: string
+        - name: startYear
+          in: query
+          description: Filtrer par année de début
+          required: false
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2100
+        - name: page
+          in: query
+          description: "Numéro de page (défaut: 1)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: "Nombre d'éléments par page (défaut: 10, max: 100)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Liste des groupes récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      tags:
+        - Groups
+      summary: Créer un nouveau groupe
+      description: Crée un nouveau groupe musical avec les informations fournies
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreateRequest'
+            example:
+              name: "The Beatles"
+              origin: "Liverpool, UK"
+              city: "Liverpool"
+              startYear: 1960
+              endYear: 1970
+              founders: "John Lennon, Paul McCartney, George Harrison, Ringo Starr"
+              membersCount: 4
+              musicalStyle: "Rock"
+              presentation: "Groupe de rock britannique légendaire"
+      responses:
+        '201':
+          description: Groupe créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /groups/{id}:
+    get:
+      tags:
+        - Groups
+      summary: Détails d'un groupe
+      description: Récupère les détails complets d'un groupe par son ID
+      operationId: getGroup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du groupe
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails du groupe récupérés avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      tags:
+        - Groups
+      summary: Modifier un groupe
+      description: Met à jour les informations d'un groupe existant
+      operationId: updateGroup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du groupe
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdateRequest'
+      responses:
+        '200':
+          description: Groupe modifié avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      tags:
+        - Groups
+      summary: Supprimer un groupe
+      description: Supprime un groupe et tous ses concerts associés
+      operationId: deleteGroup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du groupe
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Groupe supprimé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /groups/import:
+    post:
+      tags:
+        - Groups
+      summary: Importer des groupes depuis un fichier Excel
+      description: |
+        Importe plusieurs groupes depuis un fichier Excel (.xlsx, .xls).
+        
+        Format attendu du fichier Excel :
+        - Colonne A : Nom
+        - Colonne B : Origine
+        - Colonne C : Ville
+        - Colonne D : Année début
+        - Colonne E : Année séparation
+        - Colonne F : Fondateurs
+        - Colonne G : Nombre de membres
+        - Colonne H : Style musical
+        - Colonne I : Présentation
+      operationId: importGroups
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Fichier Excel (.xlsx ou .xls)
+      responses:
+        '200':
+          description: Import réussi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "3 groupes importés avec succès"
+                  data:
+                    type: object
+                    properties:
+                      imported:
+                        type: integer
+                        example: 3
+                      errors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            row:
+                              type: integer
+                            message:
+                              type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /groups/count:
+    get:
+      tags:
+        - Groups
+      summary: Compter le nombre de groupes
+      description: Retourne le nombre total de groupes dans la base de données
+      operationId: countGroups
+      responses:
+        '200':
+          description: Nombre de groupes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: integer
+                    example: 25
+
+  # ===========================================
+  # SALLES (Salles de concert)
+  # ===========================================
+  /salles:
+    get:
+      tags:
+        - Salles
+      summary: Liste des salles avec filtres et pagination
+      description: |
+        Récupère la liste des salles de concert avec possibilité de filtrer par :
+        - city : Ville
+        - minCapacity : Capacité minimale
+        
+        La pagination est gérée via les paramètres `page` et `limit`.
+      operationId: listSalles
+      parameters:
+        - name: city
+          in: query
+          description: Filtrer par ville
+          required: false
+          schema:
+            type: string
+        - name: minCapacity
+          in: query
+          description: Capacité minimale
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: page
+          in: query
+          description: "Numéro de page (défaut: 1)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: "Nombre d'éléments par page (défaut: 10, max: 100)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Liste des salles récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalleListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      tags:
+        - Salles
+      summary: Créer une nouvelle salle
+      description: Crée une nouvelle salle de concert
+      operationId: createSalle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalleCreateRequest'
+            example:
+              name: "Olympia"
+              city: "Paris"
+              capacity: 2000
+              address: "28 Boulevard des Capucines, 75009 Paris"
+      responses:
+        '201':
+          description: Salle créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /salles/{id}:
+    get:
+      tags:
+        - Salles
+      summary: Détails d'une salle
+      description: Récupère les détails complets d'une salle par son ID
+      operationId: getSalle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la salle
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails de la salle récupérés avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalleResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      tags:
+        - Salles
+      summary: Modifier une salle
+      description: Met à jour les informations d'une salle existante
+      operationId: updateSalle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la salle
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalleUpdateRequest'
+      responses:
+        '200':
+          description: Salle modifiée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      tags:
+        - Salles
+      summary: Supprimer une salle
+      description: Supprime une salle et tous ses concerts associés
+      operationId: deleteSalle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la salle
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Salle supprimée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /salles/import:
+    post:
+      tags:
+        - Salles
+      summary: Importer des salles depuis un fichier Excel
+      description: |
+        Importe plusieurs salles depuis un fichier Excel (.xlsx, .xls).
+        
+        Format attendu du fichier Excel :
+        - Colonne A : Nom
+        - Colonne B : Ville
+        - Colonne C : Capacité
+        - Colonne D : Adresse
+      operationId: importSalles
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Fichier Excel (.xlsx ou .xls)
+      responses:
+        '200':
+          description: Import réussi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "5 salles importées avec succès"
+                  data:
+                    type: object
+                    properties:
+                      imported:
+                        type: integer
+                        example: 5
+                      errors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            row:
+                              type: integer
+                            message:
+                              type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /salles/count:
+    get:
+      tags:
+        - Salles
+      summary: Compter le nombre de salles
+      description: Retourne le nombre total de salles dans la base de données
+      operationId: countSalles
+      responses:
+        '200':
+          description: Nombre de salles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: integer
+                    example: 15
+
+  # ===========================================
+  # CONCERTS
+  # ===========================================
+  /concerts:
+    get:
+      tags:
+        - Concerts
+      summary: Liste des concerts avec filtres et pagination
+      description: |
+        Récupère la liste des concerts avec possibilité de filtrer par :
+        - status : Statut du concert (planned, confirmed, cancelled, completed, postponed)
+        - date : Date du concert (format YYYY-MM-DD)
+        - salleId : ID de la salle
+        - groupId : ID du groupe
+        
+        La pagination est gérée via les paramètres `page` et `limit`.
+      operationId: listConcerts
+      parameters:
+        - name: status
+          in: query
+          description: Filtrer par statut
+          required: false
+          schema:
+            type: string
+            enum: [planned, confirmed, cancelled, completed, postponed]
+        - name: date
+          in: query
+          description: "Filtrer par date (format YYYY-MM-DD)"
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: salleId
+          in: query
+          description: Filtrer par ID de salle
+          required: false
+          schema:
+            type: integer
+        - name: groupId
+          in: query
+          description: Filtrer par ID de groupe
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: "Numéro de page (défaut: 1)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: "Nombre d'éléments par page (défaut: 10, max: 100)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Liste des concerts récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcertListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      tags:
+        - Concerts
+      summary: Créer un nouveau concert
+      description: |
+        Programme un nouveau concert.
+        
+        **Note importante** : La durée (`duration`) est exprimée en **heures** (minimum 1 heure).
+      operationId: createConcert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConcertCreateRequest'
+            example:
+              groupId: 1
+              salleId: 1
+              date: "2026-03-15"
+              time: "20:00"
+              duration: 2
+              status: "planned"
+      responses:
+        '201':
+          description: Concert créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Groupe ou salle introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /concerts/{id}:
+    get:
+      tags:
+        - Concerts
+      summary: Détails d'un concert
+      description: Récupère les détails complets d'un concert par son ID
+      operationId: getConcert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du concert
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails du concert récupérés avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcertResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      tags:
+        - Concerts
+      summary: Modifier un concert
+      description: Met à jour les informations d'un concert existant
+      operationId: updateConcert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du concert
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConcertUpdateRequest'
+      responses:
+        '200':
+          description: Concert modifié avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      tags:
+        - Concerts
+      summary: Supprimer un concert
+      description: Supprime un concert
+      operationId: deleteConcert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du concert
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Concert supprimé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /concerts/count:
+    get:
+      tags:
+        - Concerts
+      summary: Compter le nombre de concerts
+      description: Retourne le nombre total de concerts dans la base de données
+      operationId: countConcerts
+      responses:
+        '200':
+          description: Nombre de concerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: integer
+                    example: 50
+
+  # ===========================================
+  # DASHBOARD
+  # ===========================================
+  /dashboard/stats:
+    get:
+      tags:
+        - Dashboard
+      summary: Statistiques du dashboard
+      description: Retourne les statistiques globales (nombre de groupes, salles, concerts)
+      operationId: getDashboardStats
+      responses:
+        '200':
+          description: Statistiques récupérées avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /dashboard/recent-activity:
+    get:
+      tags:
+        - Dashboard
+      summary: Activités récentes
+      description: Retourne les 10 dernières activités (création, modification, suppression de groupes, salles, concerts)
+      operationId: getRecentActivity
+      responses:
+        '200':
+          description: Activités récentes récupérées avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentActivityResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    # ===========================================
+    # GROUP SCHEMAS
+    # ===========================================
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID unique du groupe
+          example: 1
+        name:
+          type: string
+          description: Nom du groupe
+          example: "The Beatles"
+        origin:
+          type: string
+          description: Origine du groupe
+          example: "Liverpool, UK"
+        city:
+          type: string
+          nullable: true
+          description: Ville d'origine
+          example: "Liverpool"
+        startYear:
+          type: integer
+          nullable: true
+          description: Année de début
+          minimum: 1900
+          maximum: 2100
+          example: 1960
+        endYear:
+          type: integer
+          nullable: true
+          description: Année de séparation
+          minimum: 1900
+          maximum: 2100
+          example: 1970
+        founders:
+          type: string
+          nullable: true
+          description: Fondateurs du groupe
+          example: "John Lennon, Paul McCartney, George Harrison, Ringo Starr"
+        membersCount:
+          type: integer
+          description: Nombre de membres
+          minimum: 1
+          example: 4
+        musicalStyle:
+          type: string
+          description: Style musical
+          example: "Rock"
+        presentation:
+          type: string
+          nullable: true
+          description: Présentation du groupe
+          example: "Groupe de rock britannique légendaire"
+        createdAt:
+          type: string
+          format: date-time
+          description: Date de création
+          example: "2026-01-15T10:30:00+00:00"
+
+    GroupCreateRequest:
+      type: object
+      required:
+        - name
+        - origin
+        - membersCount
+        - musicalStyle
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "The Beatles"
+        origin:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Liverpool, UK"
+        city:
+          type: string
+          maxLength: 255
+          nullable: true
+          example: "Liverpool"
+        startYear:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+          nullable: true
+          example: 1960
+        endYear:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+          nullable: true
+          example: 1970
+        founders:
+          type: string
+          nullable: true
+          example: "John Lennon, Paul McCartney, George Harrison, Ringo Starr"
+        membersCount:
+          type: integer
+          minimum: 1
+          example: 4
+        musicalStyle:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Rock"
+        presentation:
+          type: string
+          nullable: true
+          example: "Groupe de rock britannique légendaire"
+
+    GroupUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/GroupCreateRequest'
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: ID du groupe à modifier
+
+    GroupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Group'
+
+    GroupListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ===========================================
+    # SALLE SCHEMAS
+    # ===========================================
+    Salle:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID unique de la salle
+          example: 1
+        name:
+          type: string
+          description: Nom de la salle
+          example: "Olympia"
+        city:
+          type: string
+          description: Ville
+          example: "Paris"
+        capacity:
+          type: integer
+          description: Capacité (nombre de places)
+          minimum: 1
+          example: 2000
+        address:
+          type: string
+          description: Adresse complète
+          example: "28 Boulevard des Capucines, 75009 Paris"
+
+    SalleCreateRequest:
+      type: object
+      required:
+        - name
+        - city
+        - capacity
+        - address
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Olympia"
+        city:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Paris"
+        capacity:
+          type: integer
+          minimum: 1
+          example: 2000
+        address:
+          type: string
+          minLength: 1
+          example: "28 Boulevard des Capucines, 75009 Paris"
+
+    SalleUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/SalleCreateRequest'
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: ID de la salle à modifier
+
+    SalleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Salle'
+
+    SalleListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Salle'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ===========================================
+    # CONCERT SCHEMAS
+    # ===========================================
+    Concert:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID unique du concert
+          example: 1
+        date:
+          type: string
+          format: date
+          description: Date du concert
+          example: "2026-03-15"
+        time:
+          type: string
+          format: time
+          description: Heure du concert
+          example: "20:00"
+        duration:
+          type: integer
+          description: Durée en heures
+          minimum: 1
+          example: 2
+        status:
+          type: string
+          enum: [planned, confirmed, cancelled, completed, postponed]
+          description: Statut du concert
+          example: "planned"
+        salle:
+          $ref: '#/components/schemas/Salle'
+        group:
+          $ref: '#/components/schemas/Group'
+
+    ConcertCreateRequest:
+      type: object
+      required:
+        - groupId
+        - salleId
+        - date
+        - time
+        - duration
+      properties:
+        groupId:
+          type: integer
+          description: ID du groupe
+          example: 1
+        salleId:
+          type: integer
+          description: ID de la salle
+          example: 1
+        date:
+          type: string
+          format: date
+          description: "Date du concert (format YYYY-MM-DD)"
+          example: "2026-03-15"
+        time:
+          type: string
+          format: time
+          description: "Heure du concert (format HH:MM)"
+          example: "20:00"
+        duration:
+          type: integer
+          description: Durée en heures (minimum 1)
+          minimum: 1
+          example: 2
+        status:
+          type: string
+          enum: [planned, confirmed, cancelled, completed, postponed]
+          default: planned
+          description: Statut du concert
+          example: "planned"
+
+    ConcertUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ConcertCreateRequest'
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: ID du concert à modifier
+
+    ConcertResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Concert'
+
+    ConcertListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Concert'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ===========================================
+    # DASHBOARD SCHEMAS
+    # ===========================================
+    DashboardStats:
+      type: object
+      properties:
+        groups:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 25
+            growth:
+              type: integer
+              example: 0
+        venues:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 15
+            growth:
+              type: integer
+              example: 0
+        concerts:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 50
+            growth:
+              type: integer
+              example: 0
+
+    DashboardStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/DashboardStats'
+
+    RecentActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          enum: [group, salle, concert]
+          example: "concert"
+        message:
+          type: string
+          example: "Concert créé"
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-02-09T10:30:00+00:00"
+
+    RecentActivityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecentActivity'
+
+    # ===========================================
+    # COMMON SCHEMAS
+    # ===========================================
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Page actuelle
+          example: 1
+        limit:
+          type: integer
+          description: Nombre d'éléments par page
+          example: 10
+        total:
+          type: integer
+          description: Nombre total d'éléments
+          example: 100
+        totalPages:
+          type: integer
+          description: Nombre total de pages
+          example: 10
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Opération réussie"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Message d'erreur détaillé"
+
+  responses:
+    BadRequest:
+      description: Requête invalide (400)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Les données fournies sont invalides"
+
+    NotFound:
+      description: Ressource introuvable (404)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Ressource introuvable"
+
+    InternalServerError:
+      description: Erreur serveur (500)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Une erreur interne s'est produite"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Authentification par token JWT.
+        Actuellement en mode mock pour le développement.
+        Format: `Bearer {token}`
+
+security:
+  - BearerAuth: []
+

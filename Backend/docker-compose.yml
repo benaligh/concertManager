@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Symfony API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: concert-manager-api
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./:/var/www/html
+      - ./var:/var/www/html/var
+    environment:
+      - APP_ENV=dev
+      - DATABASE_URL=mysql://root:root@db:3306/concert_manager?serverVersion=8.0&charset=utf8mb4
+    depends_on:
+      - db
+    networks:
+      - concert-manager-network
+    command: php -S 0.0.0.0:8005 -t public
+    restart: unless-stopped
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: concert-manager-db
+    # Port non exposé à l'extérieur, accessible uniquement via le réseau Docker
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: concert_manager
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - concert-manager-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PHPMyAdmin (optionnel, pour gérer la base de données)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: concert-manager-phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+    depends_on:
+      - db
+    networks:
+      - concert-manager-network
+
+networks:
+  concert-manager-network:
+    driver: bridge
+
+volumes:
+  db_data:

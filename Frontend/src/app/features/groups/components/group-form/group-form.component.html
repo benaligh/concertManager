@@ -1,0 +1,76 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ group ? 'Modifier le groupe' : 'Ajouter un groupe' }}</h2>
+      <button class="close-btn" (click)="onCancel()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      <div class="form-group">
+        <label for="name">Nom *</label>
+        <input type="text" id="name" formControlName="name" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label for="origin">Origine *</label>
+        <input type="text" id="origin" formControlName="origin" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label for="city">Ville</label>
+        <input type="text" id="city" formControlName="city" class="form-input" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startYear">Année de début</label>
+          <input type="number" id="startYear" formControlName="startYear" class="form-input" min="1900" [max]="currentYear" />
+        </div>
+
+        <div class="form-group">
+          <label for="separationYear">Année de séparation</label>
+          <input type="number" id="separationYear" formControlName="separationYear" class="form-input" min="1900" [max]="currentYear" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="founders">Fondateurs</label>
+        <input type="text" id="founders" formControlName="founders" class="form-input" placeholder="Ex: John Doe, Jane Smith" />
+      </div>
+
+      <div class="form-group">
+        <label for="musicalCurrent">Courant musical *</label>
+        <input type="text" id="musicalCurrent" formControlName="musicalCurrent" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label for="members">Nombre de membres *</label>
+        <input type="number" id="members" formControlName="members" class="form-input" min="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="presentation">Présentation</label>
+        <textarea
+          id="presentation"
+          formControlName="presentation"
+          class="form-textarea"
+          rows="5"
+          placeholder="Décrivez le groupe, son histoire, son style musical..."
+        ></textarea>
+        <span class="form-hint">Vous pouvez ajouter une description détaillée du groupe</span>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Annuler</button>
+        <button type="submit" class="btn btn-purple" [disabled]="form.invalid || loading">
+          {{ loading ? 'Enregistrement...' : (group ? 'Modifier' : 'Ajouter') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

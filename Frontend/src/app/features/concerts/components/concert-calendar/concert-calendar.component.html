@@ -1,0 +1,42 @@
+<div class="calendar-container">
+  <div class="calendar-header">
+    <button class="nav-btn" (click)="previousMonth()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <h2 class="month-title">{{ getMonthName() }} {{ currentDate.getFullYear() }}</h2>
+    <button class="nav-btn" (click)="nextMonth()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="calendar-grid">
+    <div class="calendar-weekdays">
+      <div *ngFor="let day of [0,1,2,3,4,5,6]" class="weekday">{{ getDayName(day) }}</div>
+    </div>
+    <div class="calendar-days">
+      <div
+        *ngFor="let day of calendarDays"
+        class="calendar-day"
+        [class.other-month]="!day.isCurrentMonth"
+      >
+        <div class="day-number">{{ day.date.getDate() }}</div>
+        <div class="day-concerts">
+          <div
+            *ngFor="let concert of day.concerts"
+            class="concert-event"
+            [class]="'concert-event status-' + concert.status"
+            [title]="concert.groupName + ' - ' + concert.venueName + ' à ' + concert.time"
+          >
+            <span class="concert-time">{{ concert.time }}</span>
+            <span class="concert-name">{{ concert.groupName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
